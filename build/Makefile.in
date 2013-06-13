@@ -332,6 +332,10 @@ HEADERS   = src/moarvm.h src/6model/6model.h src/core/instance.h src/core/thread
 moarvm$(EXE): $(THIRDPARTY_LIBS) $(LIBTOMMATH_BIN) $(CORE_OBJS) $(MAIN_OBJ)
 	$(LD) $(LOUTO)moarvm$(EXE) $(LDFLAGS) $(CORE_OBJS) $(MAIN_OBJ) $(LIBTOMMATH_BIN) $(THIRDPARTY_LIBS) $(LLIBS)
 
+# libmoarvm.a
+libmoarvm.a: $(THIRDPARTY_LIBS) $(LIBTOMMATH_BIN) $(CORE_OBJS)
+	$(AR) r libmoarvm.a $(CORE_OBJS) $(MAIN_OBJ) $(LIBTOMMATH_BIN) $(THIRDPARTY_LIBS)
+
 # APR
 $(APR_LIB):
 	$(APR_BUILD_LINE)
