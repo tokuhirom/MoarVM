@@ -22,6 +22,10 @@
 /* needs to be after config.h */
 #include <uthash.h>
 
+#ifdef ___cplusplus
+extern "C" {
+#endif
+
 /* Headers for APIs for various other data structures and APIs. */
 #include "6model/6model.h"
 #include "core/threadcontext.h"
@@ -75,3 +79,7 @@ void MVM_vm_destroy_instance(MVMInstance *instance);
 /* returns non-zero for success. Use for both AO_t numbers and pointers. */
 #define MVM_cas(addr, old, new) AO_compare_and_swap_full((volatile AO_t *)(addr), (AO_t)(old), (AO_t)(new))
 #define MVM_barrier() AO_nop_full()
+
+#ifdef ___cplusplus
+}; /* extern "C" */
+#endif
