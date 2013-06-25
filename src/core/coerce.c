@@ -199,14 +199,56 @@ void MVM_coerce_smart_stringify(MVMThreadContext *tc, MVMObject *obj, MVMRegiste
 }
 
 MVMint64 MVM_coerce_s_i(MVMThreadContext *tc, MVMString *s) {
-    char     *enc = MVM_string_ascii_encode(tc, s, NULL);
+    MVMuint64 length;
+    char     *enc = MVM_string_ascii_encode(tc, s, &length);
+    if (length>2 && enc[0]=='0') {
+        if (enc[1]=='o') {
+            MVMint64  i   = strtoll(enc+2, NULL, 8);
+            free(enc);
+            return i;
+        } else if (enc[1]=='d') {
+            MVMnum64 n = strtoll(enc+2, NULL, 10);
+            free(enc);
+            return n;
+        } else if (enc[1]=='b') {
+            MVMnum64 n = strtoll(enc+2, NULL, 2);
+            free(enc);
+            return n;
+        } else if (enc[1]=='x') {
+            MVMint64  i   = strtoll(enc+2, NULL, 16);
+            free(enc);
+            return i;
+        }
+    }
+
     MVMint64  i   = strtoll(enc, NULL, 10);
     free(enc);
     return i;
 }
 
 MVMnum64 MVM_coerce_s_n(MVMThreadContext *tc, MVMString *s) {
-    char     *enc = MVM_string_ascii_encode(tc, s, NULL);
+    MVMuint64 length;
+    char     *enc = MVM_string_ascii_encode(tc, s, &length);
+    if (length>2 && enc[0]=='0') {
+        if (enc[1]=='o') {
+            MVMint64  i   = strtoll(enc+2, NULL, 8);
+            free(enc);
+            return i;
+        } else if (enc[1]=='d') {
+            MVMnum64 n = strtoll(enc+2, NULL, 10);
+            free(enc);
+            return n;
+        } else if (enc[1]=='b') {
+            MVMnum64 n = strtoll(enc+2, NULL, 2);
+            free(enc);
+            return n;
+        } else if (enc[1]=='x') {
+            MVMint64  i   = strtoll(enc+2, NULL, 16);
+            free(enc);
+            return i;
+        }
+    }
+
     MVMnum64  n   = atof(enc);
     free(enc);
     return n;
