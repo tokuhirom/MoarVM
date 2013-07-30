@@ -1164,7 +1164,8 @@ QAST::MASTOperations.add_core_moarop_mapping('setpayload', 'bindexpayload', 1);
 QAST::MASTOperations.add_core_moarop_mapping('getmessage', 'getexmessage');
 QAST::MASTOperations.add_core_moarop_mapping('setmessage', 'bindexmessage', 1);
 QAST::MASTOperations.add_core_moarop_mapping('newexception', 'newexception');
-# XXX backtrace, backtracestrings
+QAST::MASTOperations.add_core_moarop_mapping('backtracestrings', 'backtracestrings');
+# XXX backtrace
 QAST::MASTOperations.add_core_moarop_mapping('throw', 'throwdyn');
 # XXX rethrow, resume
 
@@ -1558,6 +1559,8 @@ QAST::MASTOperations.add_core_moarop_mapping('serialize', 'serialize');
 QAST::MASTOperations.add_core_moarop_mapping('deserialize', 'deserialize');
 QAST::MASTOperations.add_core_moarop_mapping('scwbdisable', 'scwbdisable');
 QAST::MASTOperations.add_core_moarop_mapping('scwbenable', 'scwbenable');
+QAST::MASTOperations.add_core_moarop_mapping('pushcompsc', 'pushcompsc', 0);
+QAST::MASTOperations.add_core_moarop_mapping('popcompsc', 'popcompsc');
 
 # bitwise opcodes
 QAST::MASTOperations.add_core_moarop_mapping('bitor_i', 'bor_i');

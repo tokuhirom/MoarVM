@@ -176,6 +176,7 @@ BANK 0 primitives
 0xAE    assign              r(obj) r(obj)
 0xAF    assignunchecked     r(obj) r(obj)
 0xB0    objprimspec         w(int64) r(obj)
+0xB1    backtracestrings    w(obj) r(obj)
 
 BANK 1 dev
 0x00    sleep               r(int64)
@@ -518,7 +519,7 @@ BANK 6 processthread
 0x1C    time_n              w(num64)
 0x1D    exit                r(int64)
 0x1E    loadbytecode        w(str) r(str)
-0x1F    getenvhash			w(obj)
+0x1F    getenvhash          w(obj)
 
 BANK 7 serialization
 0x00    sha1                w(str) r(str)
@@ -538,3 +539,5 @@ BANK 7 serialization
 0x0E    wval_wide           w(obj) int16 int64
 0x0F    scwbdisable         w(obj)
 0x10    scwbenable          w(obj)
+0x11    pushcompsc          r(obj)
+0x12    popcompsc           w(obj)

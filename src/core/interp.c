@@ -845,6 +845,51 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                             : NULL;
                         cur_op += 2;
                         break;
+                    case MVM_OP_bindexmessage: {
+                        MVMObject *ex = GET_REG(cur_op, 0).o;
+                        if (IS_CONCRETE(ex) && REPR(ex)->ID == MVM_REPR_ID_MVMException)
+                            ((MVMException *)ex)->body.message = GET_REG(cur_op, 2).s;
+                        else
+                            MVM_exception_throw_adhoc(tc, "bindexmessage needs a VMException");
+                        cur_op += 4;
+                        break;
+                    }
+                    case MVM_OP_bindexpayload: {
+                        MVMObject *ex = GET_REG(cur_op, 0).o;
+                        if (IS_CONCRETE(ex) && REPR(ex)->ID == MVM_REPR_ID_MVMException)
+                            ((MVMException *)ex)->body.payload = GET_REG(cur_op, 2).o;
+                        else
+                            MVM_exception_throw_adhoc(tc, "bindexpayload needs a VMException");
+                        cur_op += 4;
+                        break;
+                    }
+                    case MVM_OP_bindexcategory: {
+                        MVMObject *ex = GET_REG(cur_op, 0).o;
+                        if (IS_CONCRETE(ex) && REPR(ex)->ID == MVM_REPR_ID_MVMException)
+                            ((MVMException *)ex)->body.category = GET_REG(cur_op, 2).i64;
+                        else
+                            MVM_exception_throw_adhoc(tc, "bindexcategory needs a VMException");
+                        cur_op += 4;
+                        break;
+                    }
+                    case MVM_OP_getexmessage: {
+                        MVMObject *ex = GET_REG(cur_op, 2).o;
+                        if (IS_CONCRETE(ex) && REPR(ex)->ID == MVM_REPR_ID_MVMException)
+                            GET_REG(cur_op, 0).s = ((MVMException *)ex)->body.message;
+                        else
+                            MVM_exception_throw_adhoc(tc, "getexmessage needs a VMException");
+                        cur_op += 4;
+                        break;
+                    }
+                    case MVM_OP_getexpayload: {
+                        MVMObject *ex = GET_REG(cur_op, 2).o;
+                        if (IS_CONCRETE(ex) && REPR(ex)->ID == MVM_REPR_ID_MVMException)
+                            GET_REG(cur_op, 0).o = ((MVMException *)ex)->body.payload;
+                        else
+                            MVM_exception_throw_adhoc(tc, "getexpayload needs a VMException");
+                        cur_op += 4;
+                        break;
+                    }
                     case MVM_OP_getexcategory: {
                         MVMObject *ex = GET_REG(cur_op, 2).o;
                         if (IS_CONCRETE(ex) && REPR(ex)->ID == MVM_REPR_ID_MVMException)
@@ -885,11 +930,11 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                         break;
                     }
                     case MVM_OP_die: {
-                        MVMObject *exObj = MVM_repr_alloc_init(tc, tc->instance->boot_types->BOOTException);
-                        MVMException *ex = (MVMException *)exObj;
+                        MVMObject *ex_obj = MVM_repr_alloc_init(tc, tc->instance->boot_types->BOOTException);
+                        MVMException *ex = (MVMException *)ex_obj;
                         ex->body.category = MVM_EX_CAT_CATCH;
-                        MVM_ASSIGN_REF(tc, exObj, ex->body.message, GET_REG(cur_op, 2).s);
-                        MVM_exception_throwobj(tc, MVM_EX_THROW_DYN, exObj, &GET_REG(cur_op, 0));
+                        MVM_ASSIGN_REF(tc, ex_obj, ex->body.message, GET_REG(cur_op, 2).s);
+                        MVM_exception_throwobj(tc, MVM_EX_THROW_DYN, ex_obj, &GET_REG(cur_op, 0));
                         break;
                     }
                     case MVM_OP_newlexotic: {
@@ -1091,6 +1136,10 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                         cur_op += 4;
                         break;
                     }
+                    case MVM_OP_backtracestrings:
+                        GET_REG(cur_op, 0).o = MVM_exception_backtrace_strings(tc, GET_REG(cur_op, 2).o);
+                        cur_op += 4;
+                        break;
                     default: {
                         MVM_panic(MVM_exitcode_invalidopcode, "Invalid opcode executed (corrupt bytecode stream?) bank %u opcode %u",
                                 MVM_OP_BANK_primitives, *(cur_op-1));
@@ -1749,10 +1798,7 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                         break;
                     }
                     case MVM_OP_coerce_Is: {
-                        MVMObject *a = GET_REG(cur_op, 2).o;
-                        MVMROOT(tc, a, {
-                            GET_REG(cur_op, 0).s = MVM_bigint_to_str(tc, a, 10);
-                        });
+                        GET_REG(cur_op, 0).s = MVM_bigint_to_str(tc, GET_REG(cur_op, 2).o, 10);
                         cur_op += 4;
                         break;
                     }
@@ -1762,10 +1808,7 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                         break;
                     }
                     case MVM_OP_base_I: {
-                        MVMObject *a = GET_REG(cur_op, 2).o;
-                        MVMROOT(tc, a, {
-                            GET_REG(cur_op, 0).s = MVM_bigint_to_str(tc, a, GET_REG(cur_op, 4).i64);
-                        });
+                        GET_REG(cur_op, 0).s = MVM_bigint_to_str(tc, GET_REG(cur_op, 2).o, GET_REG(cur_op, 4).i64);
                         cur_op += 6;
                         break;
                     }
@@ -2339,10 +2382,8 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                         MVMObject *value = GET_REG(cur_op, 2).o;
                         MVMROOT(tc, value, {
                             MVMObject *cloned = REPR(value)->allocate(tc, STABLE(value));
-                            MVMROOT(tc, cloned, {
-                                REPR(value)->copy_to(tc, STABLE(value), OBJECT_BODY(value), cloned, OBJECT_BODY(cloned));
-                                GET_REG(cur_op, 0).o = cloned;
-                            });
+                            REPR(value)->copy_to(tc, STABLE(value), OBJECT_BODY(value), cloned, OBJECT_BODY(cloned));
+                            GET_REG(cur_op, 0).o = cloned;
                         });
                         cur_op += 4;
                         break;
@@ -3257,6 +3298,30 @@ void MVM_interp_run(MVMThreadContext *tc, void (*initial_invoke)(MVMThreadContex
                         GET_REG(cur_op, 0).i64 = --tc->sc_wb_disable_depth;
                         cur_op += 2;
                         break;
+                    case MVM_OP_pushcompsc: {
+                        MVMObject * const sc  = GET_REG(cur_op, 0).o;
+                        if (REPR(sc)->ID != MVM_REPR_ID_SCRef)
+                            MVM_exception_throw_adhoc(tc, "Can only push an SCRef with pushcompsc");
+
+                        if (!tc->compiling_scs) {
+                            MVMROOT(tc, sc, {
+                                tc->compiling_scs = MVM_repr_alloc_init(tc, tc->instance->boot_types->BOOTArray);
+                            });
+                        }
+                        MVM_repr_push_o(tc, tc->compiling_scs, sc);
+                        cur_op += 2;
+                        break;
+                    }
+                    case MVM_OP_popcompsc: {
+                        MVMObject * const scs = tc->compiling_scs;
+                        if (MVM_repr_elems(tc, scs) == 0)
+                            MVM_exception_throw_adhoc(tc, "No current compiling SC");
+
+                        REPR(scs)->pos_funcs->pop(tc, STABLE(scs), scs,
+                            OBJECT_BODY(scs), &GET_REG(cur_op, 0), MVM_reg_obj);
+                        cur_op += 2;
+                        break;
+                    }
                     default: {
                         MVM_panic(MVM_exitcode_invalidopcode, "Invalid opcode executed (corrupt bytecode stream?) bank %u opcode %u",
                                 MVM_OP_BANK_serialization, *(cur_op-1));
